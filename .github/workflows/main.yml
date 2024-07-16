@@ -1,0 +1,44 @@
+name: main
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-core:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            pyodide_packages: "tag:core,numpy${{ needs.test-scipy-trigger.outputs.test == 'true' && ',scipy' || '' }}"
+          - os: macos-14
+            pyodide_packages: "tag:core,numpy"
+    runs-on: ${{ matrix.os }}
+    needs: [commit-trigger]
+    env:
+      PYODIDE_PACKAGES: ${{ matrix.pyodide_packages }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check
+        shell: bash -l {0}
+        run: |
+          echo $PYODIDE_PACKAGES
+
+  commit-trigger:
+    name: commit-trigger
+    runs-on: ubuntu-latest
+    outputs:
+      test: ${{ steps.check-build-trigger.outputs.trigger }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: check-build-trigger
+        name: Check build trigger
+        run: bash tools/check_build_trigger.sh
+
