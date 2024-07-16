@@ -6,18 +6,25 @@ on:
 
 jobs:
   build-core:
+    runs-on: ${{ matrix.os }}
+    needs: [commit-trigger]
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            pyodide_packages: "tag:core,numpy${{ needs.test-scipy-trigger.outputs.test == 'true' && ',scipy' || '' }}"
+            pyodide_packages: "tag:core,numpy${{ needs.commit-trigger.outputs.test == 'true' && ',scipy' || '' }}"
+            my_expr: ${{ needs.commit-trigger.outputs.test }}
+            my_expr2: ${{ needs.commit-trigger.outputs.test == 'true' && ',scipy' || '' }}
+            my_expr3: ${{ needs.commit-trigger.outputs.test && ',scipy' || '' }}
+
           - os: macos-14
             pyodide_packages: "tag:core,numpy"
-    runs-on: ${{ matrix.os }}
-    needs: [commit-trigger]
     env:
       PYODIDE_PACKAGES: ${{ matrix.pyodide_packages }}
+      MY_EXPR: ${{ matrix.my_expr }}
+      MY_EXPR2: ${{ matrix.my_expr2 }}
+      MY_EXPR3: ${{ matrix.my_expr3 }}
 
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +33,19 @@ jobs:
         shell: bash -l {0}
         run: |
           echo $PYODIDE_PACKAGES
+          echo $MY_EXPR
+          echo $MY_EXPR2
+          echo $MY_EXPR3
+
+  test-scipy:
+    runs-on: ubuntu-latest
+    needs: [commit-trigger, build-core]
+    if: needs.commit-trigger.outputs.test
+
+    steps:
+      - name: Check
+        run: |
+          echo 'running tests'
 
   commit-trigger:
     name: commit-trigger
