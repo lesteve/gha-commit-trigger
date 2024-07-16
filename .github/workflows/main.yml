@@ -12,6 +12,10 @@ jobs:
         include:
           - os: ubuntu-latest
             pyodide_packages: "tag:core,numpy${{ needs.test-scipy-trigger.outputs.test == 'true' && ',scipy' || '' }}"
+            my_expr: ${{ needs.test-scipy-trigger.outputs.test }}
+            my_expr2: ${{ needs.test-scipy-trigger.outputs.test == 'true' && ',scipy' || '' }}
+            my_expr3: ${{ needs.test-scipy-trigger.outputs.test && ',scipy' || '' }}
+
           - os: macos-14
             pyodide_packages: "tag:core,numpy"
     runs-on: ${{ matrix.os }}
@@ -26,6 +30,16 @@ jobs:
         shell: bash -l {0}
         run: |
           echo $PYODIDE_PACKAGES
+
+  test-scipy:
+    runs-on: ubuntu-latest
+    needs: [commit-trigger]
+    if: needs.commit-trigger.outputs.test
+
+    steps:
+      - name: Check
+        run: |
+          echo 'running tests'
 
   commit-trigger:
     name: commit-trigger
