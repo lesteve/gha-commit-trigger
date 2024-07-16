@@ -39,7 +39,7 @@ jobs:
 
   test-scipy:
     runs-on: ubuntu-latest
-    needs: [commit-trigger]
+    needs: [commit-trigger, build-core]
     if: needs.commit-trigger.outputs.test
 
     steps:
